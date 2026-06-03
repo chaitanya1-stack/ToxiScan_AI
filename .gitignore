@@ -1,0 +1,21 @@
+# Large Data Files
+*.csv
+*.sdf
+*.xlsx
+# EXCEPTION: Force tracking of your specific shield file
+!safeMOL/ultimate_safety_shield.csv
+
+# Python & System
+__pycache__/
+.DS_Store
+.ipynb_checkpoints/
+venv/
+.venv/
+tox21_env/
+
+Model/knowledge_base.db
+*.db
+*.sqlite3
+
+# Parquet / large data
+*.parquetModel/db_fps.bin

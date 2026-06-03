@@ -1,0 +1,144 @@
+/* --- GLOBAL --- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background-color: #000000; color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+.app-container { min-height: 100vh; display: flex; flex-direction: column; }
+.mt-2 { margin-top: 1.5rem; }
+
+/* --- HOME PAGE --- */
+.home-view { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem 1rem; text-align: center; }
+.hero-title { font-size: 4rem; font-weight: 900; margin-bottom: 0.5rem; color: #ffffff; }
+.hero-title span { color: #6366f1; }
+.hero-subtitle { font-size: 1.25rem; color: #a3a3a3; margin-bottom: 3rem; max-width: 600px; }
+.search-box { display: flex; width: 100%; max-width: 700px; background-color: #121212; border: 1px solid #262626; border-radius: 12px; padding: 0.5rem; box-shadow: 0 10px 30px rgba(99, 102, 241, 0.1); }
+.search-input { flex: 1; background: transparent; border: none; color: #ffffff; font-size: 1.1rem; padding: 1rem; font-family: monospace; width: 100%; }
+.search-input:focus { outline: none; }
+.submit-btn { background-color: #ffffff; color: #000000; border: none; border-radius: 8px; padding: 0 2rem; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
+.submit-btn:hover:not(:disabled) { background-color: #e5e5e5; }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.error-message { color: #ef4444; margin-top: 1rem; font-weight: bold; }
+
+/* --- RESULTS PAGE --- */
+.results-view { max-width: 1200px; margin: 0 auto; padding: 3rem 2rem; width: 100%; }
+.back-btn { background: transparent; border: 1px solid #333; color: #a3a3a3; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; margin-bottom: 2rem; font-weight: bold; }
+.back-btn:hover { background: #1a1a1a; color: #fff; }
+.dashboard-grid { display: flex; gap: 1.5rem; align-items: stretch; width: 100%; }
+
+/* Grid Card Allocations & Layout Correction Utilities */
+.molecule-card, .table-card, .info-card { background-color: #121212; border: 1px solid #262626; border-radius: 16px; padding: 1.5rem; width: 100%; }
+.molecule-card { flex: 1 1 0%; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.table-card { flex: 2 1 0%; display: flex; flex-direction: column; min-width: 0; }
+.info-card { display: flex; flex-direction: column; min-width: 0; }
+
+/* Aligns the bottom cards cleanly with a matching 1:2 ratio scale */
+.col-33 { flex: 1 1 0%; }
+.col-67 { flex: 2 1 0%; }
+
+.card-header { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 1.5rem; border-bottom: 1px solid #262626; padding-bottom: 1rem; }
+.molecule-svg-container { background-color: #1a1a1a; border-radius: 12px; padding: 1rem; width: 100%; display: flex; justify-content: center; overflow-x: auto; }
+
+/* --- TEXT UTILITIES --- */
+.counter-text { color: #a3a3a3; font-size: 0.9rem; }
+.subheader-text { color: #a3a3a3; font-size: 0.85rem; }
+.confidence-cell { color: #e5e5e5; font-family: monospace; font-size: 0.95rem; }
+
+/* --- IDENTITY --- */
+.molecule-identity { width: 100%; margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; background-color: #1a1a1a; padding: 1.25rem; border-radius: 12px; border: 1px solid #262626; }
+.identity-group { display: flex; flex-direction: column; gap: 0.35rem; }
+.identity-label { font-size: 0.75rem; text-transform: uppercase; color: #a3a3a3; font-weight: 700; letter-spacing: 0.05em; }
+.identity-value { color: #ffffff; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; }
+.highlight-name { color: #6366f1; font-weight: 600; font-size: 1.15rem; }
+.iupac-text, .smiles-text { font-family: monospace; color: #d4d4d8; font-size: 0.85rem; line-height: 1.5; }
+
+/* --- TABLE STYLING --- */
+.table-responsive-wrapper { width: 100%; overflow-x: auto; }
+.hazards-table { width: 100%; border-collapse: collapse; text-align: left; }
+.hazards-table th { color: #a3a3a3; font-size: 0.85rem; text-transform: uppercase; padding: 1rem; border-bottom: 2px solid #262626; white-space: nowrap; }
+.hazards-table td { padding: 1.25rem 1rem; border-bottom: 1px solid #262626; vertical-align: top; }
+.hazards-table tr:last-child td { border-bottom: none; }
+.hazard-title { color: #ffffff; font-weight: bold; font-size: 1.05rem; margin-bottom: 0.25rem; }
+.hazard-desc { color: #a3a3a3; font-size: 0.9rem; line-height: 1.4; }
+
+/* --- BADGES --- */
+.badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; border: 1px solid transparent; white-space: nowrap; }
+.badge-safe { background-color: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.3); }
+.badge-hazardous { background-color: rgba(239, 68, 68, 0.1); color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
+.badge-high { background-color: rgba(239, 68, 68, 0.15); color: #ef4444; border-color: rgba(239, 68, 68, 0.4); }
+.badge-medium { background-color: rgba(245, 158, 11, 0.15); color: #f59e0b; border-color: rgba(245, 158, 11, 0.4); }
+.badge-low { background-color: rgba(59, 130, 246, 0.15); color: #3b82f6; border-color: rgba(59, 130, 246, 0.4); }
+.safe-message { text-align: center; color: #10b981; padding: 3rem; font-size: 1.1rem; background-color: rgba(16, 185, 129, 0.05); border-radius: 12px; }
+
+/* =========================================
+   NEW SHAP EXPLAINER STYLES 
+   ========================================= */
+.shap-scroll-container { max-height: 420px; overflow-y: auto; padding-right: 8px; }
+.shap-scroll-container::-webkit-scrollbar { width: 6px; }
+.shap-scroll-container::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+.shap-group-block { margin-bottom: 1.5rem; background: #1e1e1e; border-radius: 8px; padding: 14px; border: 1px solid #2e2e2e; }
+.shap-endpoint-title { color: #3b82f6; margin: 0 0 12px 0; font-size: 0.85rem; letter-spacing: 0.05em; font-weight: 700; border-bottom: 1px solid #2e2e2e; padding-bottom: 6px; }
+.shap-items-wrapper { display: flex; flex-direction: column; gap: 12px; }
+.shap-row-item { display: flex; flex-direction: column; gap: 6px; }
+
+.shap-meta-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+.shap-feature-name { color: #ffffff; font-weight: 600; font-size: 0.9rem; font-family: monospace; }
+.shap-value-badge { font-size: 0.85rem; font-family: monospace; font-weight: bold; }
+.text-up { color: #ff4d4d; }
+.text-down { color: #51cf66; }
+
+/* Visual Contribution Bars */
+.shap-bar-track { width: 100%; height: 6px; background: #2d2d2d; border-radius: 3px; overflow: hidden; position: relative; }
+.shap-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+.bg-up { background: linear-gradient(90deg, #ff6b6b, #ff4d4d); }
+.bg-down { background: linear-gradient(90deg, #51cf66, #4dff4d); }
+.shap-direction-label { font-size: 0.75rem; color: #737373; font-style: italic; }
+
+/* =========================================
+   NEW SIMILARITY MATCH STYLES 
+   ========================================= */
+.similar-scroll-container { max-height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 8px; }
+.similar-scroll-container::-webkit-scrollbar { width: 6px; }
+.similar-scroll-container::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+.similar-item-card { background: #1e1e1e; border: 1px solid #2e2e2e; border-radius: 8px; padding: 12px; }
+.similar-card-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.similar-smiles-string { color: #a3a3a3; font-family: monospace; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65%; }
+.similarity-percentage { color: #38bdf8; font-weight: bold; font-size: 0.9rem; }
+.similar-tags-flex { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.badge-hazard-pill { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; text-transform: uppercase; font-weight: bold; }
+.badge-safe-outline { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: bold; }
+
+/* =========================================
+   MOBILE RESPONSIVENESS
+   ========================================= */
+@media (max-width: 768px) {
+  .hero-title { font-size: 2.5rem; }
+  .hero-subtitle { font-size: 1rem; margin-bottom: 2rem; }
+  
+  .search-box { flex-direction: column; background-color: transparent; border: none; box-shadow: none; padding: 0; gap: 10px; }
+  .search-input { background-color: #121212; border: 1px solid #262626; border-radius: 12px; padding: 1rem; }
+  .submit-btn { width: 100%; padding: 1rem; }
+  
+  .results-view { padding: 1.5rem 1rem; }
+  .dashboard-grid { flex-direction: column; gap: 1.5rem; }
+  
+  /* Reset layout flex widths on mobile screens to ensure components wrap stacked cleanly */
+  .col-33, .col-67, .molecule-card, .table-card, .info-card { flex: none !important; width: 100%; }
+  
+  .card-header { flex-direction: column; gap: 10px; align-items: flex-start; }
+  
+  /* Table Stack for Mobile */
+  .hazards-table thead { display: none; }
+  .hazards-table, .hazards-table tbody, .hazards-table tr, .hazards-table td { display: block; width: 100%; }
+  .hazards-table tr { margin-bottom: 1rem; border: 1px solid #262626; border-radius: 12px; padding: 1rem; background-color: #1a1a1a; }
+  .hazards-table td { padding: 0.5rem 0; border-bottom: 1px solid #262626; display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+  .hazards-table td:last-child { border-bottom: none; }
+  .hazards-table td::before { content: attr(data-label); font-size: 0.75rem; text-transform: uppercase; color: #a3a3a3; font-weight: bold; }
+
+  /* Ensure long SMILES don't break layout on mobile */
+  .similar-card-row { flex-direction: column; align-items: flex-start; gap: 5px; }
+  .similar-smiles-string { max-width: 100%; }
+}

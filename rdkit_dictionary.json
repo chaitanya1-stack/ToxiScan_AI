@@ -1,0 +1,662 @@
+{
+    "MaxAbsEStateIndex": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "MaxEStateIndex": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "MinAbsEStateIndex": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "MinEStateIndex": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "qed": {
+        "desc": "Calculate the weighted sum of ADS mapped properties"
+    },
+    "SPS": {
+        "desc": "Calculates the SpacialScore descriptor. By default, the score is normalized by the number of heavy atoms (nSPS) resulting in a float value,"
+    },
+    "MolWt": {
+        "desc": "The average molecular weight of the molecule"
+    },
+    "HeavyAtomMolWt": {
+        "desc": "The average molecular weight of the molecule ignoring hydrogens"
+    },
+    "ExactMolWt": {
+        "desc": "The exact molecular weight of the molecule"
+    },
+    "NumValenceElectrons": {
+        "desc": "The number of valence electrons the molecule has"
+    },
+    "NumRadicalElectrons": {
+        "desc": "The number of radical electrons the molecule has"
+    },
+    "MaxPartialCharge": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "MinPartialCharge": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "MaxAbsPartialCharge": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "MinAbsPartialCharge": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "FpDensityMorgan1": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "FpDensityMorgan2": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "FpDensityMorgan3": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "BCUT2D_MWHI": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "BCUT2D_MWLOW": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "BCUT2D_CHGHI": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "BCUT2D_CHGLO": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "BCUT2D_LOGPHI": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "BCUT2D_LOGPLOW": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "BCUT2D_MRHI": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "BCUT2D_MRLOW": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "AvgIpc": {
+        "desc": "This returns the average information content of the coefficients of the characteristic"
+    },
+    "BalabanJ": {
+        "desc": "Calculate Balaban's J value for a molecule"
+    },
+    "BertzCT": {
+        "desc": "A topological index meant to quantify \"complexity\" of molecules."
+    },
+    "Chi0": {
+        "desc": "From equations (1),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)"
+    },
+    "Chi0n": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "Chi0v": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "Chi1": {
+        "desc": "From equations (1),(11) and (12) of Rev. Comp. Chem. vol 2, 367-422, (1991)"
+    },
+    "Chi1n": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "Chi1v": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "Chi2n": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "Chi2v": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "Chi3n": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "Chi3v": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "Chi4n": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "Chi4v": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "HallKierAlpha": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "Ipc": {
+        "desc": "This returns the information content of the coefficients of the characteristic"
+    },
+    "Kappa1": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "Kappa2": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "Kappa3": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "LabuteASA": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "PEOE_VSA1": {
+        "desc": "MOE Charge VSA Descriptor 1 (-inf < x < -0.30)"
+    },
+    "PEOE_VSA10": {
+        "desc": "MOE Charge VSA Descriptor 10 ( 0.10 <= x <  0.15)"
+    },
+    "PEOE_VSA11": {
+        "desc": "MOE Charge VSA Descriptor 11 ( 0.15 <= x <  0.20)"
+    },
+    "PEOE_VSA12": {
+        "desc": "MOE Charge VSA Descriptor 12 ( 0.20 <= x <  0.25)"
+    },
+    "PEOE_VSA13": {
+        "desc": "MOE Charge VSA Descriptor 13 ( 0.25 <= x <  0.30)"
+    },
+    "PEOE_VSA14": {
+        "desc": "MOE Charge VSA Descriptor 14 ( 0.30 <= x < inf)"
+    },
+    "PEOE_VSA2": {
+        "desc": "MOE Charge VSA Descriptor 2 (-0.30 <= x < -0.25)"
+    },
+    "PEOE_VSA3": {
+        "desc": "MOE Charge VSA Descriptor 3 (-0.25 <= x < -0.20)"
+    },
+    "PEOE_VSA4": {
+        "desc": "MOE Charge VSA Descriptor 4 (-0.20 <= x < -0.15)"
+    },
+    "PEOE_VSA5": {
+        "desc": "MOE Charge VSA Descriptor 5 (-0.15 <= x < -0.10)"
+    },
+    "PEOE_VSA6": {
+        "desc": "MOE Charge VSA Descriptor 6 (-0.10 <= x < -0.05)"
+    },
+    "PEOE_VSA7": {
+        "desc": "MOE Charge VSA Descriptor 7 (-0.05 <= x <  0.00)"
+    },
+    "PEOE_VSA8": {
+        "desc": "MOE Charge VSA Descriptor 8 ( 0.00 <= x <  0.05)"
+    },
+    "PEOE_VSA9": {
+        "desc": "MOE Charge VSA Descriptor 9 ( 0.05 <= x <  0.10)"
+    },
+    "SMR_VSA1": {
+        "desc": "MOE MR VSA Descriptor 1 (-inf < x <  1.29)"
+    },
+    "SMR_VSA10": {
+        "desc": "MOE MR VSA Descriptor 10 ( 4.00 <= x < inf)"
+    },
+    "SMR_VSA2": {
+        "desc": "MOE MR VSA Descriptor 2 ( 1.29 <= x <  1.82)"
+    },
+    "SMR_VSA3": {
+        "desc": "MOE MR VSA Descriptor 3 ( 1.82 <= x <  2.24)"
+    },
+    "SMR_VSA4": {
+        "desc": "MOE MR VSA Descriptor 4 ( 2.24 <= x <  2.45)"
+    },
+    "SMR_VSA5": {
+        "desc": "MOE MR VSA Descriptor 5 ( 2.45 <= x <  2.75)"
+    },
+    "SMR_VSA6": {
+        "desc": "MOE MR VSA Descriptor 6 ( 2.75 <= x <  3.05)"
+    },
+    "SMR_VSA7": {
+        "desc": "MOE MR VSA Descriptor 7 ( 3.05 <= x <  3.63)"
+    },
+    "SMR_VSA8": {
+        "desc": "MOE MR VSA Descriptor 8 ( 3.63 <= x <  3.80)"
+    },
+    "SMR_VSA9": {
+        "desc": "MOE MR VSA Descriptor 9 ( 3.80 <= x <  4.00)"
+    },
+    "SlogP_VSA1": {
+        "desc": "MOE logP VSA Descriptor 1 (-inf < x < -0.40)"
+    },
+    "SlogP_VSA10": {
+        "desc": "MOE logP VSA Descriptor 10 ( 0.40 <= x <  0.50)"
+    },
+    "SlogP_VSA11": {
+        "desc": "MOE logP VSA Descriptor 11 ( 0.50 <= x <  0.60)"
+    },
+    "SlogP_VSA12": {
+        "desc": "MOE logP VSA Descriptor 12 ( 0.60 <= x < inf)"
+    },
+    "SlogP_VSA2": {
+        "desc": "MOE logP VSA Descriptor 2 (-0.40 <= x < -0.20)"
+    },
+    "SlogP_VSA3": {
+        "desc": "MOE logP VSA Descriptor 3 (-0.20 <= x <  0.00)"
+    },
+    "SlogP_VSA4": {
+        "desc": "MOE logP VSA Descriptor 4 ( 0.00 <= x <  0.10)"
+    },
+    "SlogP_VSA5": {
+        "desc": "MOE logP VSA Descriptor 5 ( 0.10 <= x <  0.15)"
+    },
+    "SlogP_VSA6": {
+        "desc": "MOE logP VSA Descriptor 6 ( 0.15 <= x <  0.20)"
+    },
+    "SlogP_VSA7": {
+        "desc": "MOE logP VSA Descriptor 7 ( 0.20 <= x <  0.25)"
+    },
+    "SlogP_VSA8": {
+        "desc": "MOE logP VSA Descriptor 8 ( 0.25 <= x <  0.30)"
+    },
+    "SlogP_VSA9": {
+        "desc": "MOE logP VSA Descriptor 9 ( 0.30 <= x <  0.40)"
+    },
+    "TPSA": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "EState_VSA1": {
+        "desc": "EState VSA Descriptor 1 (-inf < x <  -0.39)"
+    },
+    "EState_VSA10": {
+        "desc": "EState VSA Descriptor 10 ( 9.17 <= x <  15.00)"
+    },
+    "EState_VSA11": {
+        "desc": "EState VSA Descriptor 11 ( 15.00 <= x < inf)"
+    },
+    "EState_VSA2": {
+        "desc": "EState VSA Descriptor 2 ( -0.39 <= x <  0.29)"
+    },
+    "EState_VSA3": {
+        "desc": "EState VSA Descriptor 3 ( 0.29 <= x <  0.72)"
+    },
+    "EState_VSA4": {
+        "desc": "EState VSA Descriptor 4 ( 0.72 <= x <  1.17)"
+    },
+    "EState_VSA5": {
+        "desc": "EState VSA Descriptor 5 ( 1.17 <= x <  1.54)"
+    },
+    "EState_VSA6": {
+        "desc": "EState VSA Descriptor 6 ( 1.54 <= x <  1.81)"
+    },
+    "EState_VSA7": {
+        "desc": "EState VSA Descriptor 7 ( 1.81 <= x <  2.05)"
+    },
+    "EState_VSA8": {
+        "desc": "EState VSA Descriptor 8 ( 2.05 <= x <  4.69)"
+    },
+    "EState_VSA9": {
+        "desc": "EState VSA Descriptor 9 ( 4.69 <= x <  9.17)"
+    },
+    "VSA_EState1": {
+        "desc": "VSA EState Descriptor 1 (-inf < x <  4.78)"
+    },
+    "VSA_EState10": {
+        "desc": "VSA EState Descriptor 10 ( 11.00 <= x < inf)"
+    },
+    "VSA_EState2": {
+        "desc": "VSA EState Descriptor 2 ( 4.78 <= x <  5.00)"
+    },
+    "VSA_EState3": {
+        "desc": "VSA EState Descriptor 3 ( 5.00 <= x <  5.41)"
+    },
+    "VSA_EState4": {
+        "desc": "VSA EState Descriptor 4 ( 5.41 <= x <  5.74)"
+    },
+    "VSA_EState5": {
+        "desc": "VSA EState Descriptor 5 ( 5.74 <= x <  6.00)"
+    },
+    "VSA_EState6": {
+        "desc": "VSA EState Descriptor 6 ( 6.00 <= x <  6.07)"
+    },
+    "VSA_EState7": {
+        "desc": "VSA EState Descriptor 7 ( 6.07 <= x <  6.45)"
+    },
+    "VSA_EState8": {
+        "desc": "VSA EState Descriptor 8 ( 6.45 <= x <  7.00)"
+    },
+    "VSA_EState9": {
+        "desc": "VSA EState Descriptor 9 ( 7.00 <= x <  11.00)"
+    },
+    "FractionCSP3": {
+        "desc": "CalcFractionCSP3( (Mol)mol) -> float :"
+    },
+    "HeavyAtomCount": {
+        "desc": "Number of heavy atoms a molecule."
+    },
+    "NHOHCount": {
+        "desc": "Number of NHs or OHs"
+    },
+    "NOCount": {
+        "desc": "Number of Nitrogens and Oxygens"
+    },
+    "NumAliphaticCarbocycles": {
+        "desc": "CalcNumAliphaticCarbocycles( (Mol)mol) -> int :"
+    },
+    "NumAliphaticHeterocycles": {
+        "desc": "CalcNumAliphaticHeterocycles( (Mol)mol) -> int :"
+    },
+    "NumAliphaticRings": {
+        "desc": "CalcNumAliphaticRings( (Mol)mol) -> int :"
+    },
+    "NumAmideBonds": {
+        "desc": "CalcNumAmideBonds( (Mol)mol) -> int :"
+    },
+    "NumAromaticCarbocycles": {
+        "desc": "CalcNumAromaticCarbocycles( (Mol)mol) -> int :"
+    },
+    "NumAromaticHeterocycles": {
+        "desc": "CalcNumAromaticHeterocycles( (Mol)mol) -> int :"
+    },
+    "NumAromaticRings": {
+        "desc": "CalcNumAromaticRings( (Mol)mol) -> int :"
+    },
+    "NumAtomStereoCenters": {
+        "desc": "CalcNumAtomStereoCenters( (Mol)mol) -> int :"
+    },
+    "NumBridgeheadAtoms": {
+        "desc": "CalcNumBridgeheadAtoms( (Mol)mol [, (AtomPairsParameters)atoms=None]) -> int :"
+    },
+    "NumHAcceptors": {
+        "desc": "Number of Hydrogen Bond Acceptors"
+    },
+    "NumHDonors": {
+        "desc": "Number of Hydrogen Bond Donors"
+    },
+    "NumHeteroatoms": {
+        "desc": "Number of Heteroatoms"
+    },
+    "NumHeterocycles": {
+        "desc": "CalcNumHeterocycles( (Mol)mol) -> int :"
+    },
+    "NumRotatableBonds": {
+        "desc": "Number of Rotatable Bonds"
+    },
+    "NumSaturatedCarbocycles": {
+        "desc": "CalcNumSaturatedCarbocycles( (Mol)mol) -> int :"
+    },
+    "NumSaturatedHeterocycles": {
+        "desc": "CalcNumSaturatedHeterocycles( (Mol)mol) -> int :"
+    },
+    "NumSaturatedRings": {
+        "desc": "CalcNumSaturatedRings( (Mol)mol) -> int :"
+    },
+    "NumSpiroAtoms": {
+        "desc": "CalcNumSpiroAtoms( (Mol)mol [, (AtomPairsParameters)atoms=None]) -> int :"
+    },
+    "NumUnspecifiedAtomStereoCenters": {
+        "desc": "CalcNumUnspecifiedAtomStereoCenters( (Mol)mol) -> int :"
+    },
+    "Phi": {
+        "desc": "CalcPhi( (Mol)mol) -> float :"
+    },
+    "RingCount": {
+        "desc": "RDKit calculated physicochemical descriptor."
+    },
+    "MolLogP": {
+        "desc": "Wildman-Crippen LogP value"
+    },
+    "MolMR": {
+        "desc": "Wildman-Crippen MR value"
+    },
+    "fr_Al_COO": {
+        "desc": "Number of aliphatic carboxylic acids"
+    },
+    "fr_Al_OH": {
+        "desc": "Number of aliphatic hydroxyl groups"
+    },
+    "fr_Al_OH_noTert": {
+        "desc": "Number of aliphatic hydroxyl groups excluding tert-OH"
+    },
+    "fr_ArN": {
+        "desc": "Number of N functional groups attached to aromatics"
+    },
+    "fr_Ar_COO": {
+        "desc": "Number of Aromatic carboxylic acide"
+    },
+    "fr_Ar_N": {
+        "desc": "Number of aromatic nitrogens"
+    },
+    "fr_Ar_NH": {
+        "desc": "Number of aromatic amines"
+    },
+    "fr_Ar_OH": {
+        "desc": "Number of aromatic hydroxyl groups"
+    },
+    "fr_COO": {
+        "desc": "Number of carboxylic acids"
+    },
+    "fr_COO2": {
+        "desc": "Number of carboxylic acids"
+    },
+    "fr_C_O": {
+        "desc": "Number of carbonyl O"
+    },
+    "fr_C_O_noCOO": {
+        "desc": "Number of carbonyl O, excluding COOH"
+    },
+    "fr_C_S": {
+        "desc": "Number of thiocarbonyl"
+    },
+    "fr_HOCCN": {
+        "desc": "Number of C(OH)CCN-Ctert-alkyl or  C(OH)CCNcyclic"
+    },
+    "fr_Imine": {
+        "desc": "Number of Imines"
+    },
+    "fr_NH0": {
+        "desc": "Number of Tertiary amines"
+    },
+    "fr_NH1": {
+        "desc": "Number of Secondary amines"
+    },
+    "fr_NH2": {
+        "desc": "Number of Primary amines"
+    },
+    "fr_N_O": {
+        "desc": "Number of hydroxylamine groups"
+    },
+    "fr_Ndealkylation1": {
+        "desc": "Number of XCCNR groups"
+    },
+    "fr_Ndealkylation2": {
+        "desc": "Number of tert-alicyclic amines (no heteroatoms, not quinine-like bridged N)"
+    },
+    "fr_Nhpyrrole": {
+        "desc": "Number of H-pyrrole nitrogens"
+    },
+    "fr_SH": {
+        "desc": "Number of thiol groups"
+    },
+    "fr_aldehyde": {
+        "desc": "Number of aldehydes"
+    },
+    "fr_alkyl_carbamate": {
+        "desc": "Number of alkyl carbamates (subject to hydrolysis)"
+    },
+    "fr_alkyl_halide": {
+        "desc": "Number of alkyl halides"
+    },
+    "fr_allylic_oxid": {
+        "desc": "Number of allylic oxidation sites excluding steroid dienone"
+    },
+    "fr_amide": {
+        "desc": "Number of amides"
+    },
+    "fr_amidine": {
+        "desc": "Number of amidine groups"
+    },
+    "fr_aniline": {
+        "desc": "Number of anilines"
+    },
+    "fr_aryl_methyl": {
+        "desc": "Number of aryl methyl sites for hydroxylation"
+    },
+    "fr_azide": {
+        "desc": "Number of azide groups"
+    },
+    "fr_azo": {
+        "desc": "Number of azo groups"
+    },
+    "fr_barbitur": {
+        "desc": "Number of barbiturate groups"
+    },
+    "fr_benzene": {
+        "desc": "Number of benzene rings"
+    },
+    "fr_benzodiazepine": {
+        "desc": "Number of benzodiazepines with no additional fused rings"
+    },
+    "fr_bicyclic": {
+        "desc": "Bicyclic"
+    },
+    "fr_diazo": {
+        "desc": "Number of diazo groups"
+    },
+    "fr_dihydropyridine": {
+        "desc": "Number of dihydropyridines"
+    },
+    "fr_epoxide": {
+        "desc": "Number of epoxide rings"
+    },
+    "fr_ester": {
+        "desc": "Number of esters"
+    },
+    "fr_ether": {
+        "desc": "Number of ether oxygens (including phenoxy)"
+    },
+    "fr_furan": {
+        "desc": "Number of furan rings"
+    },
+    "fr_guanido": {
+        "desc": "Number of guanidine groups"
+    },
+    "fr_halogen": {
+        "desc": "Number of halogens"
+    },
+    "fr_hdrzine": {
+        "desc": "Number of hydrazine groups"
+    },
+    "fr_hdrzone": {
+        "desc": "Number of hydrazone groups"
+    },
+    "fr_imidazole": {
+        "desc": "Number of imidazole rings"
+    },
+    "fr_imide": {
+        "desc": "Number of imide groups"
+    },
+    "fr_isocyan": {
+        "desc": "Number of isocyanates"
+    },
+    "fr_isothiocyan": {
+        "desc": "Number of isothiocyanates"
+    },
+    "fr_ketone": {
+        "desc": "Number of ketones"
+    },
+    "fr_ketone_Topliss": {
+        "desc": "Number of ketones excluding diaryl, a,b-unsat. dienones, heteroatom on Calpha"
+    },
+    "fr_lactam": {
+        "desc": "Number of beta lactams"
+    },
+    "fr_lactone": {
+        "desc": "Number of cyclic esters (lactones)"
+    },
+    "fr_methoxy": {
+        "desc": "Number of methoxy groups -OCH3"
+    },
+    "fr_morpholine": {
+        "desc": "Number of morpholine rings"
+    },
+    "fr_nitrile": {
+        "desc": "Number of nitriles"
+    },
+    "fr_nitro": {
+        "desc": "Number of nitro groups"
+    },
+    "fr_nitro_arom": {
+        "desc": "Number of nitro benzene ring substituents"
+    },
+    "fr_nitro_arom_nonortho": {
+        "desc": "Number of non-ortho nitro benzene ring substituents"
+    },
+    "fr_nitroso": {
+        "desc": "Number of nitroso groups, excluding NO2"
+    },
+    "fr_oxazole": {
+        "desc": "Number of oxazole rings"
+    },
+    "fr_oxime": {
+        "desc": "Number of oxime groups"
+    },
+    "fr_para_hydroxylation": {
+        "desc": "Number of para-hydroxylation sites"
+    },
+    "fr_phenol": {
+        "desc": "Number of phenols"
+    },
+    "fr_phenol_noOrthoHbond": {
+        "desc": "Number of phenolic OH excluding ortho intramolecular Hbond substituents"
+    },
+    "fr_phos_acid": {
+        "desc": "Number of phosphoric acid groups"
+    },
+    "fr_phos_ester": {
+        "desc": "Number of phosphoric ester groups"
+    },
+    "fr_piperdine": {
+        "desc": "Number of piperdine rings"
+    },
+    "fr_piperzine": {
+        "desc": "Number of piperzine rings"
+    },
+    "fr_priamide": {
+        "desc": "Number of primary amides"
+    },
+    "fr_prisulfonamd": {
+        "desc": "Number of primary sulfonamides"
+    },
+    "fr_pyridine": {
+        "desc": "Number of pyridine rings"
+    },
+    "fr_quatN": {
+        "desc": "Number of quaternary nitrogens"
+    },
+    "fr_sulfide": {
+        "desc": "Number of thioether"
+    },
+    "fr_sulfonamd": {
+        "desc": "Number of sulfonamides"
+    },
+    "fr_sulfone": {
+        "desc": "Number of sulfone groups"
+    },
+    "fr_term_acetylene": {
+        "desc": "Number of terminal acetylenes"
+    },
+    "fr_tetrazole": {
+        "desc": "Number of tetrazole rings"
+    },
+    "fr_thiazole": {
+        "desc": "Number of thiazole rings"
+    },
+    "fr_thiocyan": {
+        "desc": "Number of thiocyanates"
+    },
+    "fr_thiophene": {
+        "desc": "Number of thiophene rings"
+    },
+    "fr_unbrch_alkane": {
+        "desc": "Number of unbranched alkanes  of at least 4 members (excludes halogenated alkanes)"
+    },
+    "fr_urea": {
+        "desc": "Number of urea groups"
+    },
+    "Elec_MaxCharge": {
+        "desc": "The most positive electrical partial charge found on a single atom."
+    },
+    "Elec_MinCharge": {
+        "desc": "The most negative electrical partial charge found on a single atom."
+    },
+    "Elec_ChargeDensity": {
+        "desc": "The span of electrical charge spread across the heavy atoms."
+    }
+}
