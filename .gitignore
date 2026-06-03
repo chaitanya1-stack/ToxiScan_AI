@@ -2,6 +2,11 @@
 *.csv
 *.sdf
 *.xlsx
+*.tsv
+*.tsv.gz
+*.xls
+*.sdf
+*.bin
 # EXCEPTION: Force tracking of your specific shield file
 !safeMOL/ultimate_safety_shield.csv
 
