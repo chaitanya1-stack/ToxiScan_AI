@@ -1,15 +1,3 @@
-# Large Data Files
-*.csv
-*.sdf
-*.xlsx
-*.tsv
-*.tsv.gz
-*.xls
-*.sdf
-*.bin
-# EXCEPTION: Force tracking of your specific shield file
-!safeMOL/ultimate_safety_shield.csv
-
 # Python & System
 __pycache__/
 .DS_Store
@@ -18,9 +6,22 @@ venv/
 .venv/
 tox21_env/
 
-Model/knowledge_base.db
+# Data & Models (General Ignore)
+*.csv
+*.sdf
+*.xlsx
+*.tsv
+*.tsv.gz
+*.xls
+*.bin
 *.db
 *.sqlite3
+*.parquet
 
-# Parquet / large data
-*.parquetModel/db_fps.bin
+# Explicitly exclude the Model and safeMOL folders 
+# (This removes the datasets and heavy database files)
+dataset/
+safeMOL/
+
+# EXCEPTION: Force tracking of your specific shield file
+!safeMOL/ultimate_safety_shield.csv
