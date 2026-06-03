@@ -48,7 +48,7 @@ function App() {
     setError('');
     
     try {
-      const response = await axios.post('http://127.0.0.1:8000/predict', { smiles });
+      const response = await axios.post('https://ck758779-toxiscan-api.hf.space/predict', { smiles });
       setResult(response.data);
       setView('results'); 
     } catch (err) {
