@@ -25,7 +25,7 @@ app = FastAPI(title="Toxicity Screening API", version="1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://toxi-scan-ai.vercel.app"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -50,7 +50,6 @@ db_fp_sums = None
 explainer = None
 exact_features = None
 
-# Custom features set to handle calculation routing efficiently
 CUSTOM_ELECTRO_COLS = {'Elec_MaxCharge', 'Elec_MinCharge', 'Elec_ChargeDensity'}
 
 # HAZARD INFO
@@ -66,7 +65,11 @@ HAZARD_INFO = {
     "CYP450_CYP2C9": {"title": "Enzyme Interference (CYP2C9)", "description": "Interferes with the CYP2C9 enzyme, critical for processing blood thinners (like warfarin) and NSAID painkillers.", "impact": "High risk of adverse drug interactions and internal bleeding risks."},
     "CYP450_CYP2C19": {"title": "Enzyme Interference (CYP2C19)", "description": "Alters the activity of CYP2C19, an enzyme responsible for processing anti-ulcer medications and anti-seizure drugs.", "impact": "May lead to drug toxicity or render specific medications completely ineffective."},
     "CYP450_CYP2D6": {"title": "Enzyme Interference (CYD2D6)", "description": "Affects CYP2D6, a crucial enzyme responsible for metabolizing nearly 25% of all prescription drugs.", "impact": "Severe risk of multi-drug interactions, particularly with psychiatric and cardiovascular medications."},
-    "CYP450_CYP3A4": {"title": "Enzyme Interference (CYP3A4)", "description": "Interferes with CYP3A4, the most abundant metabolic enzyme in the liver that handles over 50% of all clinical drugs.", "impact": "Can lead to catastrophic drug-drug interactions and systemic toxicity."}
+    "CYP450_CYP3A4": {"title": "Enzyme Interference (CYP3A4)", "description": "Interferes with CYP3A4, the most abundant metabolic enzyme in the liver that handles over 50% of all clinical drugs.", "impact": "Can lead to catastrophic drug-drug interactions and systemic toxicity."},
+    "Eye Corrosion": {
+        "title": "Ocular Corrosion / Severe Damage", 
+        "description": "This compound contains highly reactive, corrosive, or caustic chemical groups capable of causing irreversible cellular destruction and irreversible tissue necrosis upon contact with the eye surface.", 
+        "impact": "Can lead to severe chemical burns, permanent corneal opacity (clouding), irreversible tissue scarring, and a high risk of permanent partial or total vision loss."}
 }
 
 INORGANIC_ALERTS = {
@@ -82,46 +85,15 @@ INORGANIC_ALERTS = {
 
 # UTIL 
 CHEMICAL_NAME_CACHE = {}
-
-def fetch_chemical_identity(smiles: str):
-    if smiles in CHEMICAL_NAME_CACHE:
-        return CHEMICAL_NAME_CACHE[smiles]
-
-    default_identity = {"common_name": "Novel Derivative", "iupac_name": "Unavailable"}
-    encoded_smiles = urllib.parse.quote(smiles)
-    url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/{encoded_smiles}/property/IUPACName,Title/JSON"
-    
-    try:
-        with httpx.Client(timeout=2.0) as client:
-            response = client.get(url)
-            if response.status_code == 200:
-                data = response.json()
-                props = data["PropertyTable"]["Properties"][0]
-                raw_title = str(props.get("Title", "Novel Derivative"))
-                common = "Novel Derivative" if raw_title.isdigit() else raw_title
-                iupac = props.get("IUPACName", "Unavailable")
-                result = {"common_name": common, "iupac_name": iupac}
-                CHEMICAL_NAME_CACHE[smiles] = result
-                return result
-            else:
-                return default_identity
-    except (httpx.TimeoutException, httpx.RequestError, KeyError):
-        return default_identity
     
 def get_risk_level(prob):
-    if prob >= 0.85:
-        return "HIGH"
-    elif prob >= 0.70:
-        return "MEDIUM"
-    else:
-        return "LOW"
+    if prob >= 0.85: return "HIGH"
+    elif prob >= 0.70: return "MEDIUM"
+    else: return "LOW"
 
 def get_dark_mode_palette():
     white = (0.85, 0.85, 0.85)
-    return {
-        1: white, 6: white, 7: white, 8: white, 9: white, 
-        15: white, 16: white, 17: white, 35: white, 53: white
-    }
+    return {1: white, 6: white, 7: white, 8: white, 9: white, 15: white, 16: white, 17: white, 35: white, 53: white}
 
 def check_inorganic_alerts(mol):
     for atom in mol.GetAtoms():
@@ -129,16 +101,12 @@ def check_inorganic_alerts(mol):
         if symbol in INORGANIC_ALERTS:
             alert = INORGANIC_ALERTS[symbol]
             return {
-                "status": "HAZARDOUS",
-                "safety_level": "Extreme Risk",
+                "status": "HAZARDOUS", "safety_level": "Extreme Risk",
                 "message": f"Structural Alert: {symbol} (Heavy Metal) complex detected. ML inference bypassed.",
                 "flags_detected": 1,
                 "hazards": [{
-                    "endpoint": alert["endpoint"],
-                    "title": alert["title"],
-                    "confidence": 1.0,
-                    "risk_level": "HIGH",
-                    "description": alert["desc"],
+                    "endpoint": alert["endpoint"], "title": alert["title"],
+                    "confidence": 1.0, "risk_level": "HIGH", "description": alert["desc"],
                     "impact": "High risk of severe acute or chronic toxicity. Requires strict biohazard handling."
                 }],
                 "metal_atom_idx": atom.GetIdx()  
@@ -154,8 +122,7 @@ def generate_molecule_svg(mol, is_hazardous, explicit_highlights=None):
     opts.setHighlightColour((1.0, 0.2, 0.2, 0.6)) 
     
     highlight_atoms = set()
-    if explicit_highlights:
-        highlight_atoms.update(explicit_highlights)
+    if explicit_highlights: highlight_atoms.update(explicit_highlights)
     
     if is_hazardous and hazard_catalog is not None:
         try:
@@ -163,19 +130,16 @@ def generate_molecule_svg(mol, is_hazardous, explicit_highlights=None):
             for match in matches:
                 for filter_match in match.GetFilterMatches(mol):
                     if hasattr(filter_match, 'atomPairs'):
-                        for query_idx, target_idx in filter_match.atomPairs:
-                            highlight_atoms.add(target_idx)
-        except Exception as e:
-            print(f"RDKit highlighting skipped: {e}")
+                        for query_idx, target_idx in filter_match.atomPairs: highlight_atoms.add(target_idx)
+        except Exception:
+            pass
                 
     highlight_list = list(highlight_atoms)
     rdMolDraw2D.PrepareAndDrawMolecule(drawer, mol, highlightAtoms=highlight_list)
     drawer.FinishDrawing()
     svg_str = drawer.GetDrawingText()
     
-    if "<?xml" in svg_str:
-        svg_str = svg_str.split("?>\n")[-1]
-        
+    if "<?xml" in svg_str: svg_str = svg_str.split("?>\n")[-1]
     return svg_str, highlight_list
 
 def auto_build_memory_map():
@@ -185,12 +149,9 @@ def auto_build_memory_map():
         full_df = pd.read_parquet('Model/fingerprint_knowledge_base.parquet')
         fp_cols = [col for col in full_df.columns if col.startswith('FP_')]
         fp_matrix = full_df[fp_cols].values.astype(np.float32)
-        
         fp_matrix.tofile(bin_path)
         print("✅ db_fps.bin generated and stored securely on storage volume.")
-        
-        del full_df
-        del fp_matrix
+        del full_df, fp_matrix
         gc.collect()
 
 # STARTUP 
@@ -201,13 +162,10 @@ def load_pipeline():
     global explainer, exact_features 
 
     print("Loading AI pipeline artifacts...")
-
     with open('Model/pipeline_metadata.json') as f:
         meta = json.load(f)
         exact_features = meta['fingerprints_cols'] + meta['desc_cols'] 
-
-    with open('Model/optimal_thresholds.json') as f:
-        thresholds = json.load(f)
+    with open('Model/optimal_thresholds.json') as f: thresholds = json.load(f)
 
     scaler = joblib.load('Model/desc_scaler.pkl')
     imputer = joblib.load('Model/median_imputer.pkl')
@@ -217,47 +175,31 @@ def load_pipeline():
 
     model = tf.keras.Sequential([
         tf.keras.layers.Dense(128, activation='relu', input_shape=(input_size,)),
-        tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.2),
+        tf.keras.layers.BatchNormalization(), tf.keras.layers.Dropout(0.2),
         tf.keras.layers.Dense(64, activation='relu'),
-        tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.15),
+        tf.keras.layers.BatchNormalization(), tf.keras.layers.Dropout(0.15),
         tf.keras.layers.Dense(32, activation='relu'),
-        tf.keras.layers.BatchNormalization(),
-        tf.keras.layers.Dropout(0.1),
+        tf.keras.layers.BatchNormalization(), tf.keras.layers.Dropout(0.1),
         tf.keras.layers.Dense(output_size, activation='sigmoid')
     ])
-
     model.load_weights('Model/toxicity_model.h5')
 
-    # --- SHAP INITIALIZATION (KERNEL EXPLAINER FIX) ---
     print("Initializing SHAP Explainer...")
     try:
-        # 1. Load background but SLICE it down to just 25 rows for speed
         shap_background = np.load('Model/shap_background.npy')[:25] 
-        
-        # 2. Create a clean prediction wrapper to bypass TF Graph mapping
-        def predict_wrapper(X):
-            return model(X, training=False).numpy()
-
-        # 3. KernelExplainer treats the model as a black box (immune to TF graph crashes)
+        def predict_wrapper(X): return model(X, training=False).numpy()
         explainer = shap.KernelExplainer(predict_wrapper, shap_background)
-        print("✅ SHAP explainer loaded successfully (Kernel Mode).")
     except Exception as e:
-        print(f"⚠️ Warning: Failed to load SHAP explainer: {e}")
+        print(f"Warning: Failed to load SHAP explainer: {e}")
 
     print("Loading Knowledge Base with Low-Memory Optimization...")
     try:
         auto_build_memory_map()
         essential_cols = ['SMILES'] + meta['label_names']
         kb_df = pd.read_parquet('Model/fingerprint_knowledge_base.parquet', columns=essential_cols)
-        db_smiles = kb_df['SMILES'].values
         num_compounds = len(kb_df)
-        
         db_fps = np.memmap('Model/db_fps.bin', dtype='float32', mode='r', shape=(num_compounds, 2048))
         db_fp_sums = np.sum(db_fps, axis=1)
-        print(f"Knowledge Base Connected via Disk-Mapping: {num_compounds} compounds mapped.")
-            
     except Exception as e:
         print(f"Warning: Failed to load Knowledge Base: {e}")
 
@@ -274,31 +216,10 @@ def load_pipeline():
     try:
         df = pd.read_csv('safeMOL/ultimate_safety_shield.csv', header=None, dtype=str)
         raw_smiles = df[0].astype(str).str.strip()
-        safe_smiles_shield = set(raw_smiles)
-        safe_smiles_shield.discard('SMILES')
-        safe_smiles_shield.discard('nan')
-        safe_smiles_shield.discard('')
-        print(f"Shield loaded: {len(safe_smiles_shield)} safe molecules.")
+        safe_smiles_shield = set(raw_smiles) - {'SMILES', 'nan', ''}
     except Exception as e:
         print(f"No safety shield loaded: {e}")
 
-    print("Warming up the neural engine...")
-    try:
-        dummy_mol = Chem.MolFromSmiles("C") 
-        dummy_fp = morgan_gen.GetFingerprintAsNumPy(dummy_mol)
-        dummy_fp_df = pd.DataFrame([dummy_fp], columns=[f"FP_{i}" for i in range(2048)])[meta['fingerprints_cols']]
-        dummy_desc_df = pd.DataFrame([{col: 0.0 for col in meta['desc_cols']}])[meta['desc_cols']]
-        
-        dummy_scaled = scaler.transform(dummy_desc_df)
-        dummy_X_combined = np.hstack([dummy_fp_df.values, dummy_scaled]).astype(np.float32)
-        dummy_X_final = imputer.transform(dummy_X_combined)
-        
-        _ = model(dummy_X_final, training=False) 
-        print("Engine warm. Zero-latency first request.")
-    except Exception as e:
-        print(f"Warm-up failed, first request may be slightly slower: {e}")
-
-    gc.collect()
     print("Pipeline ready.")
 
 # REQUEST 
@@ -307,192 +228,191 @@ class MoleculeRequest(BaseModel):
 
 @app.get("/health")
 def health_check():
-    return {"status": "awake", "engine": "ToxiScan V3"}
+    return {"status": "awake"}
 
+# --- 1. FAST PREDICTION ENDPOINT ---
 @app.post("/predict")
 def predict_toxicity(request: MoleculeRequest):
     smiles = request.smiles.strip()
-
     mol = Chem.MolFromSmiles(smiles)
-    if mol is None:
-        raise HTTPException(status_code=400, detail="Invalid SMILES string")
+    if mol is None: raise HTTPException(status_code=400, detail="Invalid SMILES string")
 
-    identity = fetch_chemical_identity(smiles)
     canon_iso = Chem.MolToSmiles(mol, isomericSmiles=True)
     canon_non_iso = Chem.MolToSmiles(mol, isomericSmiles=False)
 
-    # --- SAFETY SHIELD BYPASS BLOCK ---
     if (smiles in safe_smiles_shield) or (canon_iso in safe_smiles_shield) or (canon_non_iso in safe_smiles_shield):
         svg_str, hl_atoms = generate_molecule_svg(mol, is_hazardous=False)
         return {
-            "smiles": smiles,
-            "common_name": identity["common_name"],
-            "iupac_name": identity["iupac_name"],
-            "status": "SAFE",   
-            "safety_level": "Verified against EPA, FDA GRAS, and FooDB metabolic databases",
-            "message": "Compound is recognized as a standard component of human metabolism or authorized food additive, and bypassed ML inference.", 
-            "flags_detected": 0,
-            "hazards": [],   
-            "molecule_svg": svg_str,   
-            "highlight_atoms": hl_atoms,
-            "similar_compounds": [],
-            "shap_explanation": []
+            "smiles": smiles, 
+            "status": "SAFE", "safety_level": "Verified against EPA/FDA databases",
+            "message": "Compound bypassed ML inference.", "flags_detected": 0, "hazards": [],
+            "molecule_svg": svg_str, "highlight_atoms": hl_atoms
         }
 
-    # --- INORGANIC METALS BYPASS BLOCK ---
     inorganic_flag = check_inorganic_alerts(mol)
     if inorganic_flag:
         metal_idx = inorganic_flag.pop("metal_atom_idx")
-        inorganic_flag["smiles"] = smiles
-        inorganic_flag["common_name"] = identity["common_name"]
-        inorganic_flag["iupac_name"] = identity["iupac_name"]
-        inorganic_flag["molecule_svg"], inorganic_flag["highlight_atoms"] = generate_molecule_svg(mol, True, explicit_highlights=[metal_idx])
-        inorganic_flag["similar_compounds"] = []
-        inorganic_flag["shap_explanation"] = []
+        inorganic_flag.update({"smiles": smiles})
+        inorganic_flag["molecule_svg"], inorganic_flag["highlight_atoms"] = generate_molecule_svg(mol, True, [metal_idx])
         return inorganic_flag
 
-    if mol.GetNumHeavyAtoms() < 3:
-        raise HTTPException(status_code=400, detail=f"Molecule too small. Heavy Atoms: {mol.GetNumHeavyAtoms()}")
+    if mol.GetNumHeavyAtoms() < 3: raise HTTPException(status_code=400, detail="Molecule too small.")
     
     try:
-        # --- FEATURE EXTRACTION ---
         fp = morgan_gen.GetFingerprintAsNumPy(mol)
         fp_df = pd.DataFrame([fp], columns=[f"FP_{i}" for i in range(2048)])[meta['fingerprints_cols']]
 
         has_charges = any(c in meta['desc_cols'] for c in CUSTOM_ELECTRO_COLS)
         if has_charges:
             AllChem.ComputeGasteigerCharges(mol)
-            charges = [float(atom.GetProp('_GasteigerCharge')) for atom in mol.GetAtoms() 
-                       if atom.HasProp('_GasteigerCharge') and not np.isinf(float(atom.GetProp('_GasteigerCharge')))]
-            if charges:
-                max_c = float(np.max(charges))
-                min_c = float(np.min(charges))
-                span = max_c - min_c
-                num_heavy_atoms = mol.GetNumHeavyAtoms()
-                charge_density = span / num_heavy_atoms if num_heavy_atoms > 0 else 0.0
-            else:
-                max_c, min_c, charge_density = 0.0, 0.0, 0.0
+            charges = [float(a.GetProp('_GasteigerCharge')) for a in mol.GetAtoms() if a.HasProp('_GasteigerCharge') and not np.isinf(float(a.GetProp('_GasteigerCharge')))]
+            charge_density = (max(charges) - min(charges)) / mol.GetNumHeavyAtoms() if charges and mol.GetNumHeavyAtoms() > 0 else 0.0
+            max_c, min_c = (max(charges), min(charges)) if charges else (0.0, 0.0)
         else:
             max_c, min_c, charge_density = 0.0, 0.0, 0.0
             
         desc_dict = {}
         for name in meta['desc_cols']:
-            if name == 'Elec_MaxCharge':
-                desc_dict[name] = max_c
-            elif name == 'Elec_MinCharge':
-                desc_dict[name] = min_c
-            elif name == 'Elec_ChargeDensity':
-                desc_dict[name] = charge_density
-            else:
-                desc_dict[name] = getattr(Descriptors, name)(mol)
+            if name == 'Elec_MaxCharge': desc_dict[name] = max_c
+            elif name == 'Elec_MinCharge': desc_dict[name] = min_c
+            elif name == 'Elec_ChargeDensity': desc_dict[name] = charge_density
+            else: desc_dict[name] = getattr(Descriptors, name)(mol)
         
-        desc_df = pd.DataFrame([desc_dict])[meta['desc_cols']]
-        desc_df.replace([np.inf, -np.inf], np.nan, inplace=True)
-        
+        desc_df = pd.DataFrame([desc_dict])[meta['desc_cols']].replace([np.inf, -np.inf], np.nan)
         for col in meta.get('cols_to_log', []):
-            if col in desc_df.columns:
-                desc_df[col] = np.log1p(np.maximum(desc_df[col], 0))
+            if col in desc_df.columns: desc_df[col] = np.log1p(np.maximum(desc_df[col], 0))
         
-        desc_df.replace([np.inf, -np.inf], np.nan, inplace=True)
-        
-        desc_scaled = scaler.transform(desc_df)
-        X_combined = np.hstack([fp_df.values, desc_scaled]).astype(np.float32)
-        X_final = imputer.transform(X_combined)
+        X_final = imputer.transform(np.hstack([fp_df.values, scaler.transform(desc_df.replace([np.inf, -np.inf], np.nan))]).astype(np.float32))
 
-        # ===== INFERENCE =====
         preds = model(X_final, training=False)[0].numpy()
         hazards = []
-
         for j, label in enumerate(meta['label_names']):
             prob = float(preds[j])
-            thresh = float(thresholds.get(label, 0.5))
-            if prob >= thresh:
+            if prob >= float(thresholds.get(label, 0.5)):
                 info = HAZARD_INFO.get(label, {})
                 hazards.append({
-                    "endpoint": label,
-                    "title": info.get("title", label.replace("_", " ").title()),
-                    "confidence": round(prob, 3),
-                    "risk_level": get_risk_level(prob),
-                    "description": info.get("description", "Potential toxicological hazard."),
-                    "impact": info.get("impact", "Specific biological impact requires further review.")
+                    "endpoint": label, "title": info.get("title", label), "confidence": round(prob, 3),
+                    "risk_level": get_risk_level(prob), "description": info.get("description", ""),
+                    "impact": info.get("impact", "")
                 })
 
         hazards = sorted(hazards, key=lambda x: x['confidence'], reverse=True)
         svg_str, hl_atoms = generate_molecule_svg(mol, is_hazardous=bool(hazards))
 
-        # --- SHAP EXPLANATION GENERATOR (KERNEL FIX) ---
-        shap_explanation = []
-        if hazards and explainer is not None:
-            try:
-                # KernelExplainer uses standard NumPy arrays, NOT tf.Tensors
-                sv = explainer.shap_values(X_final, silent=True) 
-
-                for hazard in hazards:
-                    label_idx = meta['label_names'].index(hazard['endpoint'])
-                    
-                    if isinstance(sv, list):
-                        feature_attributions = sv[label_idx][0]
-                    else:
-                        feature_attributions = sv[0, :, label_idx] if sv.ndim == 3 else sv[0]
-                    
-                    # Sort by absolute impact value to safely secure top 3 vectors
-                    abs_attributions = np.abs(feature_attributions)
-                    top_indices = np.argsort(abs_attributions)[-3:][::-1]
-                    
-                    top_features = []
-                    for idx in top_indices:
-                        val = float(feature_attributions[idx])
-                        # Only include features with a measurable impact
-                        if abs(val) > 0.0001:
-                            top_features.append({
-                                "feature": exact_features[idx],
-                                "contribution": round(val, 4),
-                                "direction": "up" if val >= 0 else "down" 
-                            })
-                    
-                    if top_features:
-                        shap_explanation.append({
-                            "endpoint": hazard['endpoint'],
-                            "top_drivers": top_features
-                        })
-            except Exception as e:
-                print(f"❌ SHAP Runtime Error: {e}")
-
-        # TANIMOTO SIMILARITY SEARCH
-        similar_compounds = []
-        if db_fps is not None and db_fp_sums is not None:
-            try:
-                query_fp = fp.reshape(1, -1).astype(np.float32)
-                
-                intersection = np.dot(db_fps, query_fp.T).flatten()
-                sum_query = np.sum(query_fp)
-                tanimoto_scores = intersection / (db_fp_sums + sum_query - intersection)
-                
-                top_5_idx = np.argsort(tanimoto_scores)[-5:][::-1]
-                for idx in top_5_idx:
-                    row = kb_df.iloc[idx]
-                    active_hazards = [l for l in meta['label_names'] if row.get(l, 0) == 1.0]
-                    similar_compounds.append({
-                        "smiles": str(row['SMILES']),
-                        "similarity_score": float(round(tanimoto_scores[idx], 3)),
-                        "known_hazards": active_hazards
-                    })
-            except Exception as e:
-                print(f"Tanimoto Search Failed: {e}")
-
         return {
-            "smiles": smiles,
-            "common_name": identity["common_name"],
-            "iupac_name": identity["iupac_name"],
-            "status": "EVALUATED" if hazards else "SAFE",
-            "safety_level": "High Risk" if hazards else "Screened: No Flags Detected",
-            "message": f"AI detected {len(hazards)} total hazard flags." if hazards else "No high-confidence hazards detected.",
-            "flags_detected": len(hazards),
-            "hazards": hazards,
-            "molecule_svg": svg_str,
-            "highlight_atoms": hl_atoms,
-            "similar_compounds": similar_compounds,
-            "shap_explanation": shap_explanation
+            "smiles": smiles, 
+            "status": "EVALUATED" if hazards else "SAFE", "safety_level": "High Risk" if hazards else "Screened",
+            "message": f"AI detected {len(hazards)} total hazard flags." if hazards else "No hazards detected.",
+            "flags_detected": len(hazards), "hazards": hazards, "molecule_svg": svg_str,
+            "highlight_atoms": hl_atoms
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
+
+# --- 2. DEDICATED EXPLAINABILITY ENDPOINT ---
+@app.post("/explain")
+def explain_toxicity(request: MoleculeRequest):
+    smiles = request.smiles.strip()
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None: raise HTTPException(status_code=400, detail="Invalid SMILES")
+
+    try:
+        fp = morgan_gen.GetFingerprintAsNumPy(mol)
+        fp_df = pd.DataFrame([fp], columns=[f"FP_{i}" for i in range(2048)])[meta['fingerprints_cols']]
+
+        has_charges = any(c in meta['desc_cols'] for c in CUSTOM_ELECTRO_COLS)
+        if has_charges:
+            AllChem.ComputeGasteigerCharges(mol)
+            charges = [float(a.GetProp('_GasteigerCharge')) for a in mol.GetAtoms() if a.HasProp('_GasteigerCharge') and not np.isinf(float(a.GetProp('_GasteigerCharge')))]
+            charge_density = (max(charges) - min(charges)) / mol.GetNumHeavyAtoms() if charges and mol.GetNumHeavyAtoms() > 0 else 0.0
+            max_c, min_c = (max(charges), min(charges)) if charges else (0.0, 0.0)
+        else:
+            max_c, min_c, charge_density = 0.0, 0.0, 0.0
+            
+        desc_dict = {}
+        for name in meta['desc_cols']:
+            if name == 'Elec_MaxCharge': desc_dict[name] = max_c
+            elif name == 'Elec_MinCharge': desc_dict[name] = min_c
+            elif name == 'Elec_ChargeDensity': desc_dict[name] = charge_density
+            else: desc_dict[name] = getattr(Descriptors, name)(mol)
+        
+        desc_df = pd.DataFrame([desc_dict])[meta['desc_cols']].replace([np.inf, -np.inf], np.nan)
+        for col in meta.get('cols_to_log', []):
+            if col in desc_df.columns: desc_df[col] = np.log1p(np.maximum(desc_df[col], 0))
+        
+        X_final = imputer.transform(np.hstack([fp_df.values, scaler.transform(desc_df.replace([np.inf, -np.inf], np.nan))]).astype(np.float32))
+
+        preds = model(X_final, training=False)[0].numpy()
+        active_hazards = [label for j, label in enumerate(meta['label_names']) if float(preds[j]) >= float(thresholds.get(label, 0.5))]
+
+        shap_explanation = []
+        if active_hazards and explainer is not None:
+            sv = explainer.shap_values(X_final, silent=True) 
+            for hazard_label in active_hazards:
+                label_idx = meta['label_names'].index(hazard_label)
+                feature_attributions = sv[label_idx][0] if isinstance(sv, list) else (sv[0, :, label_idx] if sv.ndim == 3 else sv[0])
+                top_indices = np.argsort(np.abs(feature_attributions))[-3:][::-1]
+                top_features = [{"feature": exact_features[idx], "contribution": round(float(feature_attributions[idx]), 4), "direction": "up" if float(feature_attributions[idx]) >= 0 else "down"} for idx in top_indices if abs(float(feature_attributions[idx])) > 0.0001]
+                if top_features: shap_explanation.append({"endpoint": hazard_label, "top_drivers": top_features})
+
+        return {"shap_explanation": shap_explanation}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"SHAP Runtime Error: {str(e)}")
+
+# --- 3. DEDICATED TANIMOTO SIMILARITY ENDPOINT ---
+@app.post("/similarity")
+def find_similar(request: MoleculeRequest):
+    smiles = request.smiles.strip()
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None: raise HTTPException(status_code=400, detail="Invalid SMILES")
+
+    similar_compounds = []
+    if db_fps is not None and db_fp_sums is not None:
+        try:
+            fp = morgan_gen.GetFingerprintAsNumPy(mol)
+            query_fp = fp.reshape(1, -1).astype(np.float32)
+            
+            intersection = np.dot(db_fps, query_fp.T).flatten()
+            sum_query = np.sum(query_fp)
+            tanimoto_scores = intersection / (db_fp_sums + sum_query - intersection)
+            
+            top_5_idx = np.argsort(tanimoto_scores)[-5:][::-1]
+            for idx in top_5_idx:
+                row = kb_df.iloc[idx]
+                active_hazards = [l for l in meta['label_names'] if row.get(l, 0) == 1.0]
+                similar_compounds.append({
+                    "smiles": str(row['SMILES']),
+                    "similarity_score": float(round(tanimoto_scores[idx], 3)),
+                    "known_hazards": active_hazards
+                })
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Tanimoto Search Failed: {str(e)}")
+
+    return {"similar_compounds": similar_compounds}
+
+# --- 4. DEDICATED IDENTITY ENDPOINT (Removes PubChem Bottleneck) ---
+@app.post("/identity")
+def get_identity(request: MoleculeRequest):
+    smiles = request.smiles.strip()
+    if smiles in CHEMICAL_NAME_CACHE: return CHEMICAL_NAME_CACHE[smiles]
+
+    default_identity = {"common_name": "Novel Derivative", "iupac_name": "Unavailable"}
+    encoded_smiles = urllib.parse.quote(smiles)
+    url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/{encoded_smiles}/property/IUPACName,Title/JSON"
+    
+    try:
+        with httpx.Client(timeout=2.5) as client:
+            response = client.get(url)
+            if response.status_code == 200:
+                data = response.json()
+                props = data["PropertyTable"]["Properties"][0]
+                raw_title = str(props.get("Title", "Novel Derivative"))
+                common = "Novel Derivative" if raw_title.isdigit() else raw_title
+                iupac = props.get("IUPACName", "Unavailable")
+                result = {"common_name": common, "iupac_name": iupac}
+                CHEMICAL_NAME_CACHE[smiles] = result
+                return result
+            else:
+                return default_identity
+    except Exception:
+        return default_identity
