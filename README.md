@@ -5,7 +5,7 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-00a393)
 ![RDKit](https://img.shields.io/badge/RDKit-Cheminformatics-blueviolet)
 
-**🚀 [Live Application] -> (https://toxi-scan-ai-bychaitanya.vercel.app/)**
+**🚀 Live Application -> https://toxi-scan-ai-bychaitanya.vercel.app/ **
 
 ToxiScan AI is a production-grade, full-stack Machine Learning pipeline that predicts **11 distinct toxicological endpoints** directly from 2D molecular structures (SMILES). By combining a custom Multi-Task Artificial Neural Network (ANN) with Explainable AI (SHAP) and a blazing-fast memory-mapped similarity search, this tool serves as a high-precision, early-stage safety net for drug discovery.
 
