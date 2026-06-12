@@ -6,14 +6,13 @@ import pandas as pd
 import tensorflow as tf
 import joblib
 import json
-import urllib.request
 import urllib.parse
 import os
 import gc
 from rdkit import Chem
 from rdkit.Chem import Descriptors, AllChem
 from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
-from rdkit.Chem.Draw import rdMolDraw2D 
+from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem import FilterCatalog    
 import warnings
 import httpx
@@ -21,22 +20,26 @@ import shap
 
 warnings.filterwarnings('ignore')
 
-app = FastAPI(title="Toxicity Screening API", version="1.0")
+app = FastAPI(title="ToxiScan AI API", version="1.0")
 
+# Added localhost for local testing, kept Vercel for production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://toxi-scan-ai-bychaitanya.vercel.app"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# GLOBALS 
+# ==========================================
+# 1. GLOBALS
+# ==========================================
 model = None
 scaler = None
 imputer = None 
 meta = None
 thresholds = None
+calibrators = {}  
 morgan_gen = None
 descriptor_names = None
 safe_smiles_shield = set()
@@ -46,13 +49,18 @@ db_fps = None
 db_smiles = None
 db_fp_sums = None 
 
-# --- SHAP GLOBALS ---
 explainer = None
 exact_features = None
 
 CUSTOM_ELECTRO_COLS = {'Elec_MaxCharge', 'Elec_MinCharge', 'Elec_ChargeDensity'}
 
-# HAZARD INFO
+DEFAULT_THRESHOLDS = {
+    "Hepatotoxic": 0.45, "Cardiotoxicity": 0.45, "Respiratory_toxicity": 0.55,
+    "BBBP_toxicity": 0.55, "Mutagenicity": 0.45, "Eye Irritation": 0.55,
+    "Carcinogenicity": 0.50, "CYP450_CYP1A2": 0.55, "CYP450_CYP2C9": 0.60,
+    "CYP450_CYP2C19": 0.50, "CYP450_CYP2D6": 0.65, "CYP450_CYP3A4": 0.60
+}
+
 HAZARD_INFO = {
     "Hepatotoxic": {"title": "Liver Toxicity", "description": "The liver is the body's primary filtration system. This compound has chemical features that can overwhelm or damage liver cells during detoxification.", "impact": "May cause acute liver inflammation, impaired metabolic function, or long-term liver damage."},
     "Cardiotoxicity": {"title": "Cardiac Toxicity", "description": "This molecule contains structures known to interfere with the electrical signals or muscle fibers of the human heart.", "impact": "Can lead to irregular heartbeats (arrhythmias), changes in blood pressure, or cardiac muscle stress."},
@@ -60,16 +68,12 @@ HAZARD_INFO = {
     "BBBP_toxicity": {"title": "Blood-Brain Barrier Penetration", "description": "The human brain has a strict biological security shield. This molecule's specific size and fat-solubility allow it to sneak past that shield directly into the brain.", "impact": "High risk of unintended neurological effects, dizziness, or central nervous system toxicity."},
     "Mutagenicity": {"title": "Genetic Mutagen", "description": "This chemical is structurally prone to binding directly with human DNA sequences, causing errors when cells attempt to copy their genetic code.", "impact": "Increases the risk of permanent genetic defects and cellular mutations."},
     "Carcinogenicity": {"title": "Carcinogenic Potential", "description": "Based on its structural similarity to known cancer-causing agents, this molecule has a high potential to trigger uncontrolled cellular growth.", "impact": "Long-term exposure is heavily linked to tumor development and cancer."},
-    "Eye Irritation": {"title": "Eye Irritant", "description": "This compound acts as a mild to moderate irritant to ocular tissues, similar to airborne pollutants or harsh soaps.", "impact": "Causes temporary redness, stinging, watering, and discomfort."},
+    # "Eye Irritation": {"title": "Eye Irritant", "description": "This compound acts as a mild to moderate irritant to ocular tissues, similar to airborne pollutants or harsh soaps.", "impact": "Causes temporary redness, stinging, watering, and discomfort."},
     "CYP450_CYP1A2": {"title": "Enzyme Interference (CYP1A2)", "description": "Jams the CYP1A2 enzyme, which the body uses to break down everyday drugs like caffeine and certain antidepressants.", "impact": "Can cause other medications in your system to build up to toxic levels."},
     "CYP450_CYP2C9": {"title": "Enzyme Interference (CYP2C9)", "description": "Interferes with the CYP2C9 enzyme, critical for processing blood thinners (like warfarin) and NSAID painkillers.", "impact": "High risk of adverse drug interactions and internal bleeding risks."},
     "CYP450_CYP2C19": {"title": "Enzyme Interference (CYP2C19)", "description": "Alters the activity of CYP2C19, an enzyme responsible for processing anti-ulcer medications and anti-seizure drugs.", "impact": "May lead to drug toxicity or render specific medications completely ineffective."},
     "CYP450_CYP2D6": {"title": "Enzyme Interference (CYD2D6)", "description": "Affects CYP2D6, a crucial enzyme responsible for metabolizing nearly 25% of all prescription drugs.", "impact": "Severe risk of multi-drug interactions, particularly with psychiatric and cardiovascular medications."},
-    "CYP450_CYP3A4": {"title": "Enzyme Interference (CYP3A4)", "description": "Interferes with CYP3A4, the most abundant metabolic enzyme in the liver that handles over 50% of all clinical drugs.", "impact": "Can lead to catastrophic drug-drug interactions and systemic toxicity."},
-    "Eye Corrosion": {
-        "title": "Ocular Corrosion / Severe Damage", 
-        "description": "This compound contains highly reactive, corrosive, or caustic chemical groups capable of causing irreversible cellular destruction and irreversible tissue necrosis upon contact with the eye surface.", 
-        "impact": "Can lead to severe chemical burns, permanent corneal opacity (clouding), irreversible tissue scarring, and a high risk of permanent partial or total vision loss."}
+    "CYP450_CYP3A4": {"title": "Enzyme Interference (CYP3A4)", "description": "Interferes with CYP3A4, the most abundant metabolic enzyme in the liver that handles over 50% of all clinical drugs.", "impact": "Can lead to catastrophic drug-drug interactions and systemic toxicity."}
 }
 
 INORGANIC_ALERTS = {
@@ -77,19 +81,52 @@ INORGANIC_ALERTS = {
     "Pb": {"title": "Systemic Heavy Metal Hazard", "desc": "Lead mimics calcium, crossing the blood-brain barrier and causing severe neurological degradation.", "endpoint": "Neurotoxicity"},
     "Cd": {"title": "Severe Nephrotoxin & Carcinogen", "desc": "Cadmium accumulates in the kidneys and disrupts cellular DNA repair mechanisms.", "endpoint": "Carcinogenicity"},
     "As": {"title": "Systemic Poison", "desc": "Arsenic disrupts ATP production and cellular respiration, leading to multi-organ failure.", "endpoint": "Carcinogenicity"},
-    "Pt": {"title": "DNA Cross-linking Agent", "desc": "Platinum complexes act as potent agents that bind directly to DNA bases, halting cell division.", "endpoint": "Mutagenicity"},
-    "Au": {"title": "Hepatotoxic Metal Complex", "desc": "Organogold complexes can cause severe liver stress and renal failure.", "endpoint": "Hepatotoxic"},
-    "Os": {"title": "Severe Tissue Corrosive", "desc": "Osmium compounds are highly volatile and react instantly with exposed tissues and corneas.", "endpoint": "Eye Corrosion"},
-    "Tl": {"title": "Extreme Systemic Toxin", "desc": "Thallium mimics potassium to enter cells, causing severe neurological and systemic damage.", "endpoint": "Neurotoxicity"}
+    "Pt": {"title": "DNA Cross-linking Agent", "desc": "Platinum complexes act as potent agents that bind directly to DNA bases, halting cell division.", "endpoint": "Mutagenicity"}
 }
 
-# UTIL 
 CHEMICAL_NAME_CACHE = {}
+
+
+
+
+def get_margin_multiplier(endpoint: str) -> float:
+    """
+    Returns a percentage multiplier to create the 'UNCERTAIN' zone.
+    Harder endpoints get a wider relative uncertainty band.
+    """
+    hard_endpoints = {"Carcinogenicity", "CYP450_CYP2D6", "Hepatotoxicity"}
+    medium_endpoints = {"Respiratory_toxicity", "CYP450_CYP2C9", "CYP450_CYP3A4", "CYP450_CYP2C19", "CYP450_CYP1A2"}
+
+    if endpoint in hard_endpoints: 
+        return 0.30  # +/- 30% of the threshold
+    if endpoint in medium_endpoints: 
+        return 0.20  # +/- 20% of the threshold
+    return 0.10      # +/- 10% of the threshold
     
-def get_risk_level(prob):
-    if prob >= 0.85: return "HIGH"
-    elif prob >= 0.70: return "MEDIUM"
-    else: return "LOW"
+def get_risk_tag(prob: float, threshold: float, endpoint: str) -> str:
+    """
+    Converts calibrated probability into: SAFE / UNCERTAIN / RISK
+    Optimized: Uses dynamic, proportional scaling based on the specific threshold.
+    """
+    # Safety clamp to ensure clean math
+    threshold = min(max(threshold, 0.05), 0.95)
+    prob = min(max(prob, 0.0), 1.0)
+
+    # Get the multiplier and calculate the actual dynamic margin
+    multiplier = get_margin_multiplier(endpoint)
+    actual_margin = threshold * multiplier
+
+    # Define decision boundaries mathematically tied to the threshold
+    lower_bound = threshold - actual_margin
+    upper_bound = threshold + actual_margin
+
+    # Classification logic
+    if prob < lower_bound:
+        return "SAFE"
+    elif prob <= upper_bound:
+        return "UNCERTAIN"
+    else:
+        return "RISK"
 
 def get_dark_mode_palette():
     white = (0.85, 0.85, 0.85)
@@ -106,7 +143,7 @@ def check_inorganic_alerts(mol):
                 "flags_detected": 1,
                 "hazards": [{
                     "endpoint": alert["endpoint"], "title": alert["title"],
-                    "confidence": 1.0, "risk_level": "HIGH", "description": alert["desc"],
+                    "confidence": 1.0, "risk_level": "RISK", "description": alert["desc"],
                     "impact": "High risk of severe acute or chronic toxicity. Requires strict biohazard handling."
                 }],
                 "metal_atom_idx": atom.GetIdx()  
@@ -145,19 +182,77 @@ def generate_molecule_svg(mol, is_hazardous, explicit_highlights=None):
 def auto_build_memory_map():
     bin_path = 'Model/db_fps.bin'
     if not os.path.exists(bin_path):
-        print("⚙️ Initial Generation: Formatting Zero-RAM Binary Database Map (db_fps.bin)...")
+        print("⚙️ Formatting Zero-RAM Binary Database Map (db_fps.bin)...")
         full_df = pd.read_parquet('Model/fingerprint_knowledge_base.parquet')
         fp_cols = [col for col in full_df.columns if col.startswith('FP_')]
         fp_matrix = full_df[fp_cols].values.astype(np.float32)
         fp_matrix.tofile(bin_path)
-        print("✅ db_fps.bin generated and stored securely on storage volume.")
         del full_df, fp_matrix
         gc.collect()
 
-# STARTUP 
+def extract_pipeline_features(mol):
+    fp = morgan_gen.GetFingerprintAsNumPy(mol)
+    fp_df = pd.DataFrame([fp], columns=[f"FP_{i}" for i in range(2048)])[meta['fingerprints_cols']]
+
+    has_charges = any(c in meta['desc_cols'] for c in CUSTOM_ELECTRO_COLS)
+    if has_charges:
+        try:
+            AllChem.ComputeGasteigerCharges(mol)
+            charges = []
+            for atom in mol.GetAtoms():
+                if atom.HasProp('_GasteigerCharge'):
+                    val = atom.GetProp('_GasteigerCharge')
+                    try:
+                        charge = float(val)
+                        if not np.isnan(charge) and not np.isinf(charge):
+                            charges.append(charge)
+                    except ValueError:
+                        pass
+            
+            if len(charges) > 0:
+                max_c = float(np.max(charges))
+                min_c = float(np.min(charges))
+                num_heavy_atoms = mol.GetNumHeavyAtoms()
+                charge_density = (max_c - min_c) / num_heavy_atoms if num_heavy_atoms > 0 else 0.0
+            else:
+                max_c, min_c, charge_density = 0.0, 0.0, 0.0
+        except Exception:
+            max_c, min_c, charge_density = 0.0, 0.0, 0.0
+    else:
+        max_c, min_c, charge_density = 0.0, 0.0, 0.0
+
+    desc_dict = {}
+    for name in meta['desc_cols']:
+        if name == 'Elec_MaxCharge': desc_dict[name] = max_c
+        elif name == 'Elec_MinCharge': desc_dict[name] = min_c
+        elif name == 'Elec_ChargeDensity': desc_dict[name] = charge_density
+        else:
+            try:
+                desc_dict[name] = getattr(Descriptors, name)(mol)
+            except Exception:
+                desc_dict[name] = 0.0
+
+    desc_df = pd.DataFrame([desc_dict])[meta['desc_cols']]
+    desc_df = desc_df.replace([np.inf, -np.inf], [1e6, -1e6]).fillna(0.0)
+
+    for col in meta.get('cols_to_log', []):
+        if col in desc_df.columns:
+            desc_df[col] = np.log1p(np.maximum(desc_df[col].astype(float), 0))
+
+    desc_df = desc_df.replace([np.inf, -np.inf], np.nan)
+    scaled_desc = scaler.transform(desc_df).astype(np.float32)
+    X_combined = np.hstack([fp_df.values.astype(np.float32), scaled_desc])
+    X_combined[np.isinf(X_combined)] = np.nan
+    X_final = imputer.transform(X_combined)
+
+    return X_final
+
+
+# SERVER STARTUP
+
 @app.on_event("startup")
 def load_pipeline():
-    global model, scaler, imputer, meta, thresholds, morgan_gen, descriptor_names
+    global model, scaler, imputer, meta, thresholds, calibrators, morgan_gen, descriptor_names
     global safe_smiles_shield, hazard_catalog, kb_df, db_fps, db_smiles, db_fp_sums
     global explainer, exact_features 
 
@@ -165,7 +260,17 @@ def load_pipeline():
     with open('Model/pipeline_metadata.json') as f:
         meta = json.load(f)
         exact_features = meta['fingerprints_cols'] + meta['desc_cols'] 
-    with open('Model/optimal_thresholds.json') as f: thresholds = json.load(f)
+        
+    try:
+        with open('Model/optimal_thresholds.json') as f: 
+            thresholds = json.load(f)
+    except Exception:
+        thresholds = DEFAULT_THRESHOLDS
+
+    try:
+        calibrators = joblib.load('Model/isotonic_calibrators.pkl')
+    except Exception:
+        pass
 
     scaler = joblib.load('Model/desc_scaler.pkl')
     imputer = joblib.load('Model/median_imputer.pkl')
@@ -175,24 +280,22 @@ def load_pipeline():
 
     model = tf.keras.Sequential([
         tf.keras.layers.Dense(128, activation='relu', input_shape=(input_size,)),
-        tf.keras.layers.BatchNormalization(), tf.keras.layers.Dropout(0.2),
+        tf.keras.layers.BatchNormalization(), tf.keras.layers.Dropout(0.4),
         tf.keras.layers.Dense(64, activation='relu'),
-        tf.keras.layers.BatchNormalization(), tf.keras.layers.Dropout(0.15),
+        tf.keras.layers.BatchNormalization(), tf.keras.layers.Dropout(0.3),
         tf.keras.layers.Dense(32, activation='relu'),
-        tf.keras.layers.BatchNormalization(), tf.keras.layers.Dropout(0.1),
+        tf.keras.layers.BatchNormalization(), tf.keras.layers.Dropout(0.2),
         tf.keras.layers.Dense(output_size, activation='sigmoid')
     ])
     model.load_weights('Model/toxicity_model.h5')
 
-    print("Initializing SHAP Explainer...")
     try:
-        shap_background = np.load('Model/shap_background.npy')[:25] 
+        shap_background = np.load('Model/shap_background.npy')[:70]  
         def predict_wrapper(X): return model(X, training=False).numpy()
         explainer = shap.KernelExplainer(predict_wrapper, shap_background)
-    except Exception as e:
-        print(f"Warning: Failed to load SHAP explainer: {e}")
+    except Exception:
+        pass
 
-    print("Loading Knowledge Base with Low-Memory Optimization...")
     try:
         auto_build_memory_map()
         essential_cols = ['SMILES'] + meta['label_names']
@@ -200,29 +303,22 @@ def load_pipeline():
         num_compounds = len(kb_df)
         db_fps = np.memmap('Model/db_fps.bin', dtype='float32', mode='r', shape=(num_compounds, 2048))
         db_fp_sums = np.sum(db_fps, axis=1)
-    except Exception as e:
-        print(f"Warning: Failed to load Knowledge Base: {e}")
+    except Exception:
+        pass
 
-    morgan_gen = GetMorganGenerator(radius=3, fpSize=2048)
+    morgan_gen = GetMorganGenerator(radius=2, fpSize=2048)
     descriptor_names = [d[0] for d in Descriptors._descList]
     
-    print("Initializing RDKit Structural Alert Catalogs...")
     params = FilterCatalog.FilterCatalogParams()
     params.AddCatalog(FilterCatalog.FilterCatalogParams.FilterCatalogs.PAINS)
     params.AddCatalog(FilterCatalog.FilterCatalogParams.FilterCatalogs.BRENK)
     params.AddCatalog(FilterCatalog.FilterCatalogParams.FilterCatalogs.NIH)
     hazard_catalog = FilterCatalog.FilterCatalog(params)
+    print("API Ready.")
 
-    try:
-        df = pd.read_csv('safeMOL/ultimate_safety_shield.csv', header=None, dtype=str)
-        raw_smiles = df[0].astype(str).str.strip()
-        safe_smiles_shield = set(raw_smiles) - {'SMILES', 'nan', ''}
-    except Exception as e:
-        print(f"No safety shield loaded: {e}")
 
-    print("Pipeline ready.")
+# API ENDPOINTS
 
-# REQUEST 
 class MoleculeRequest(BaseModel):
     smiles: str
 
@@ -230,24 +326,11 @@ class MoleculeRequest(BaseModel):
 def health_check():
     return {"status": "awake"}
 
-# --- 1. FAST PREDICTION ENDPOINT ---
 @app.post("/predict")
 def predict_toxicity(request: MoleculeRequest):
     smiles = request.smiles.strip()
     mol = Chem.MolFromSmiles(smiles)
     if mol is None: raise HTTPException(status_code=400, detail="Invalid SMILES string")
-
-    canon_iso = Chem.MolToSmiles(mol, isomericSmiles=True)
-    canon_non_iso = Chem.MolToSmiles(mol, isomericSmiles=False)
-
-    if (smiles in safe_smiles_shield) or (canon_iso in safe_smiles_shield) or (canon_non_iso in safe_smiles_shield):
-        svg_str, hl_atoms = generate_molecule_svg(mol, is_hazardous=False)
-        return {
-            "smiles": smiles, 
-            "status": "SAFE", "safety_level": "Verified against EPA/FDA databases",
-            "message": "Compound bypassed ML inference.", "flags_detected": 0, "hazards": [],
-            "molecule_svg": svg_str, "highlight_atoms": hl_atoms
-        }
 
     inorganic_flag = check_inorganic_alerts(mol)
     if inorganic_flag:
@@ -259,40 +342,29 @@ def predict_toxicity(request: MoleculeRequest):
     if mol.GetNumHeavyAtoms() < 3: raise HTTPException(status_code=400, detail="Molecule too small.")
     
     try:
-        fp = morgan_gen.GetFingerprintAsNumPy(mol)
-        fp_df = pd.DataFrame([fp], columns=[f"FP_{i}" for i in range(2048)])[meta['fingerprints_cols']]
-
-        has_charges = any(c in meta['desc_cols'] for c in CUSTOM_ELECTRO_COLS)
-        if has_charges:
-            AllChem.ComputeGasteigerCharges(mol)
-            charges = [float(a.GetProp('_GasteigerCharge')) for a in mol.GetAtoms() if a.HasProp('_GasteigerCharge') and not np.isinf(float(a.GetProp('_GasteigerCharge')))]
-            charge_density = (max(charges) - min(charges)) / mol.GetNumHeavyAtoms() if charges and mol.GetNumHeavyAtoms() > 0 else 0.0
-            max_c, min_c = (max(charges), min(charges)) if charges else (0.0, 0.0)
-        else:
-            max_c, min_c, charge_density = 0.0, 0.0, 0.0
-            
-        desc_dict = {}
-        for name in meta['desc_cols']:
-            if name == 'Elec_MaxCharge': desc_dict[name] = max_c
-            elif name == 'Elec_MinCharge': desc_dict[name] = min_c
-            elif name == 'Elec_ChargeDensity': desc_dict[name] = charge_density
-            else: desc_dict[name] = getattr(Descriptors, name)(mol)
-        
-        desc_df = pd.DataFrame([desc_dict])[meta['desc_cols']].replace([np.inf, -np.inf], np.nan)
-        for col in meta.get('cols_to_log', []):
-            if col in desc_df.columns: desc_df[col] = np.log1p(np.maximum(desc_df[col], 0))
-        
-        X_final = imputer.transform(np.hstack([fp_df.values, scaler.transform(desc_df.replace([np.inf, -np.inf], np.nan))]).astype(np.float32))
-
+        X_final = extract_pipeline_features(mol)
         preds = model(X_final, training=False)[0].numpy()
+        
         hazards = []
         for j, label in enumerate(meta['label_names']):
-            prob = float(preds[j])
-            if prob >= float(thresholds.get(label, 0.5)):
+            raw_prob = float(preds[j])
+            if calibrators and label in calibrators:
+                prob = float(calibrators[label].transform([raw_prob])[0])
+            else:
+                prob = raw_prob
+                
+            active_threshold = float(thresholds.get(label, 0.5))
+            
+            # Use the new get_risk_tag function
+            risk_level = get_risk_tag(prob, active_threshold, label)
+            
+            # Only append if it's RISK or UNCERTAIN
+            if risk_level in ["RISK", "UNCERTAIN"]:
                 info = HAZARD_INFO.get(label, {})
                 hazards.append({
                     "endpoint": label, "title": info.get("title", label), "confidence": round(prob, 3),
-                    "risk_level": get_risk_level(prob), "description": info.get("description", ""),
+                    "risk_level": risk_level,
+                    "description": info.get("description", ""),
                     "impact": info.get("impact", "")
                 })
 
@@ -309,7 +381,6 @@ def predict_toxicity(request: MoleculeRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
 
-# --- 2. DEDICATED EXPLAINABILITY ENDPOINT ---
 @app.post("/explain")
 def explain_toxicity(request: MoleculeRequest):
     smiles = request.smiles.strip()
@@ -317,33 +388,20 @@ def explain_toxicity(request: MoleculeRequest):
     if mol is None: raise HTTPException(status_code=400, detail="Invalid SMILES")
 
     try:
-        fp = morgan_gen.GetFingerprintAsNumPy(mol)
-        fp_df = pd.DataFrame([fp], columns=[f"FP_{i}" for i in range(2048)])[meta['fingerprints_cols']]
-
-        has_charges = any(c in meta['desc_cols'] for c in CUSTOM_ELECTRO_COLS)
-        if has_charges:
-            AllChem.ComputeGasteigerCharges(mol)
-            charges = [float(a.GetProp('_GasteigerCharge')) for a in mol.GetAtoms() if a.HasProp('_GasteigerCharge') and not np.isinf(float(a.GetProp('_GasteigerCharge')))]
-            charge_density = (max(charges) - min(charges)) / mol.GetNumHeavyAtoms() if charges and mol.GetNumHeavyAtoms() > 0 else 0.0
-            max_c, min_c = (max(charges), min(charges)) if charges else (0.0, 0.0)
-        else:
-            max_c, min_c, charge_density = 0.0, 0.0, 0.0
-            
-        desc_dict = {}
-        for name in meta['desc_cols']:
-            if name == 'Elec_MaxCharge': desc_dict[name] = max_c
-            elif name == 'Elec_MinCharge': desc_dict[name] = min_c
-            elif name == 'Elec_ChargeDensity': desc_dict[name] = charge_density
-            else: desc_dict[name] = getattr(Descriptors, name)(mol)
-        
-        desc_df = pd.DataFrame([desc_dict])[meta['desc_cols']].replace([np.inf, -np.inf], np.nan)
-        for col in meta.get('cols_to_log', []):
-            if col in desc_df.columns: desc_df[col] = np.log1p(np.maximum(desc_df[col], 0))
-        
-        X_final = imputer.transform(np.hstack([fp_df.values, scaler.transform(desc_df.replace([np.inf, -np.inf], np.nan))]).astype(np.float32))
-
+        X_final = extract_pipeline_features(mol)
         preds = model(X_final, training=False)[0].numpy()
-        active_hazards = [label for j, label in enumerate(meta['label_names']) if float(preds[j]) >= float(thresholds.get(label, 0.5))]
+        
+        active_hazards = []
+        for j, label in enumerate(meta['label_names']):
+            raw_prob = float(preds[j])
+            prob = float(calibrators[label].transform([raw_prob])[0]) if (calibrators and label in calibrators) else raw_prob
+            
+            active_threshold = float(thresholds.get(label, 0.5))
+            risk_level = get_risk_tag(prob, active_threshold, label)
+            
+            # Explain both RISK and UNCERTAIN targets
+            if risk_level in ["RISK", "UNCERTAIN"]:
+                active_hazards.append(label)
 
         shap_explanation = []
         if active_hazards and explainer is not None:
@@ -359,7 +417,6 @@ def explain_toxicity(request: MoleculeRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"SHAP Runtime Error: {str(e)}")
 
-# --- 3. DEDICATED TANIMOTO SIMILARITY ENDPOINT ---
 @app.post("/similarity")
 def find_similar(request: MoleculeRequest):
     smiles = request.smiles.strip()
@@ -390,7 +447,6 @@ def find_similar(request: MoleculeRequest):
 
     return {"similar_compounds": similar_compounds}
 
-# --- 4. DEDICATED IDENTITY ENDPOINT (Removes PubChem Bottleneck) ---
 @app.post("/identity")
 def get_identity(request: MoleculeRequest):
     smiles = request.smiles.strip()
@@ -401,7 +457,7 @@ def get_identity(request: MoleculeRequest):
     url = f"https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/{encoded_smiles}/property/IUPACName,Title/JSON"
     
     try:
-        with httpx.Client(timeout=2.5) as client:
+        with httpx.Client(timeout=3.0) as client:
             response = client.get(url)
             if response.status_code == 200:
                 data = response.json()
