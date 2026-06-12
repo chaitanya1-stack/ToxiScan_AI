@@ -1,6 +1,8 @@
 import json
 from rdkit.Chem import Descriptors
 
+#This is used by frontend to map the rdkit descriptors with their detailed explanations
+
 #  Create an empty dictionary
 rdkit_dictionary = {}
 
