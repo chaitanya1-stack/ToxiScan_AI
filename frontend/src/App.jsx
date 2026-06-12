@@ -128,10 +128,12 @@ function App() {
     setSimData(null); setSimLoading(false); setSimError('');
   };
 
+  // UPDATED: Now maps RISK, UNCERTAIN, and SAFE to your CSS classes
   const getRiskBadgeClass = (level) => {
-    if (level === 'HIGH') return 'badge badge-high';
-    if (level === 'MEDIUM') return 'badge badge-medium';
-    return 'badge badge-low';
+    if (level === 'RISK' || level === 'HIGH') return 'badge badge-high';
+    if (level === 'UNCERTAIN' || level === 'MEDIUM') return 'badge badge-medium';
+    if (level === 'SAFE' || level === 'LOW') return 'badge badge-low';
+    return 'badge badge-low'; // Default
   };
 
   const formatEndpointName = (endpoint) => {
