@@ -1,20 +1,33 @@
-# Use a lightweight Python base image
+# 1. Start with the slim image
 FROM python:3.10-slim
 
-# Hugging Face requires running as a non-root user for security
+# 2. Install system dependencies required by RDKit
+# We must do this as root before switching to the 'user'
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libxrender1 \
+    libxext6 \
+    libx11-6 \
+    libexpat1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# 3. Security: Hugging Face requirement
 RUN useradd -m -u 1000 user
 USER user
 ENV PATH="/home/user/.local/bin:$PATH"
 
-# Set the working directory
+# 4. Set workdir
 WORKDIR /app
 
-# Copy your app files into the container and give the user read/write access
-# (This is crucial so your app can auto-build the db_fps.bin file on the hard drive)
+# 5. Copy requirements FIRST to leverage Docker cache
+# (This makes builds much faster when you change your code)
+COPY --chown=user requirements.txt .
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+# 6. Copy the rest of your app
 COPY --chown=user . /app
 
-# Install the ultra-light requirements
-RUN pip install --no-cache-dir -r requirements.txt
+# 7. Expose the port
+EXPOSE 7860
 
-# Hugging Face Spaces routes web traffic to port 7860 by default
+# 8. Start the app
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "7860"]
