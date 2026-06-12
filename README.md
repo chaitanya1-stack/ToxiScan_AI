@@ -5,7 +5,7 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-00a393)
 ![RDKit](https://img.shields.io/badge/RDKit-Cheminformatics-blueviolet)
 
-**🚀 Live Application -> https://toxi-scan-ai-bychaitanya.vercel.app/ **
+🚀 Live Application -> https://toxi-scan-ai-bychaitanya.vercel.app/ 
 
 ToxiScan AI is a production-grade, full-stack Machine Learning pipeline that predicts **11 distinct toxicological endpoints** directly from 2D molecular structures (SMILES). By combining a custom Multi-Task Artificial Neural Network (ANN) with Explainable AI (SHAP) and a blazing-fast memory-mapped similarity search, this tool serves as a high-precision, early-stage safety net for drug discovery.
 
@@ -78,7 +78,7 @@ A production model must be transparent about its limitations. I subjected ToxiSc
 * **The Model's Output:** Nailed **CYP3A4 (78%)** and Liver Toxicity.
 * **The SHAP Brilliance:** The model explicitly isolated the Universal off-switch for CYP enzymes (the imidazole/triazole ring structure) as the primary mathematical driver of the risk.
 
-**3. MPTP **
+3. MPTP 
 * **The Reality:** A synthetic neurotoxin that instantly bypasses the blood-brain barrier (BBBP).
 * **The Model's Output:** Caught the **100.0% BBBP Risk**.
 * **The SHAP Brilliance:** The Tanimoto similarity database had *zero* matches for this compound (<38% similarity). The Neural Network ignored the database and mathematically derived the 100% BBBP purely by calculating the topological polar surface area (TPSA) and lipophilicity.
