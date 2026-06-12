@@ -146,7 +146,7 @@ function App() {
         <main className="home-view">
           <h1 className="hero-title">ToxiScan <span>AI</span></h1>
           <p className="hero-subtitle">
-           An advanced AI engine for predicting molecular safety directly from SMILES strings. Our model evaluates compounds against 12 distinct safety endpoints: Organ Toxicity (Heart, Liver, Lungs), Genotoxicity (Cancer, Mutations), Blood-Brain Barrier Penetration, Eye Irritation, and 5 key CYP450 metabolic enzymes.
+           An advanced AI engine for predicting molecular safety directly from SMILES strings. Our model evaluates compounds against 12 distinct safety endpoints: Organ Toxicity (Heart, Liver, Lungs), Genotoxicity (Cancer, Mutations), Blood-Brain Barrier Penetration, and 5 key CYP450 metabolic enzymes.
           </p>
           <div className="search-box">
             <input 
